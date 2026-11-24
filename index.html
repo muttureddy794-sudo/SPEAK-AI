@@ -169,7 +169,7 @@ textarea{min-width:0;max-width:100%}
 }
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.page.on{animation:none}}
 </style></head><body>
-<nav><b class="logo"><span class="lg">🤟</span>SignSpeak AI</b><button id="navBtn" type="button" aria-label="Menu" aria-expanded="false">☰</button><div class="links" id="navLinks"><a href="#home">Home</a><a href="#live">Live Recognition</a><a href="#train" id="navTrain">Train Gestures</a><a href="#library">Gesture Library</a><a href="#history">History</a><a href="#settings">Settings</a><button id="motionBtn" class="ghost" type="button" aria-pressed="false" title="Reduce animations">✨ Motion</button><button id="pwaInstallBtn" class="ghost pwa-install" type="button" hidden>＋ Install App</button><button id="authChip" class="ghost" type="button" onclick="chipClick()" aria-label="Training lock status">🔒 Locked</button></div></nav>
+<nav><b class="logo"><span class="lg">🤟</span>SignSpeak AI</b><button id="navBtn" type="button" aria-label="Menu" aria-expanded="false">☰</button><div class="links" id="navLinks"><a href="#home">Home</a><a href="#live">Live Recognition</a><a href="#train" id="navTrain">Train Gestures</a><a href="#library">Gesture Library</a><a href="#history">History</a><a href="#settings">Settings</a><button id="motionBtn" class="ghost" type="button" aria-pressed="false" title="Reduce animations">✨ Motion</button><button id="pwaInstallBtn" class="ghost pwa-install" type="button" hidden>＋ Install App</button><button id="accountBtn" class="ghost" type="button" onclick="openAccountPanel()">👤 Account</button><button id="authChip" class="ghost" type="button" onclick="chipClick()" aria-label="Training lock status">🔒 Locked</button></div></nav>
 <canvas id="fx" aria-hidden="true"></canvas>
 <main>
 <section id="home" class="page">
@@ -205,7 +205,7 @@ textarea{min-width:0;max-width:100%}
 <div id="trainHost"></div>
 <template id="trainTpl">
 <div class="card tbar"><span class="badge" id="authBadge">🔓 Training unlocked</span><span class="muted" id="authTimer"></span>
-<span class="sp"><button type="button" class="alt" onclick="lockTraining()">🔒 Lock Training</button><button type="button" class="ghost" onclick="logoutTraining()">⎋ Logout</button></span></div>
+<span class="sp"><button type="button" class="alt" onclick="lockTraining()">🔒 Lock Training</button><button type="button" class="ghost" onclick="logoutTraining()">↪ Switch Account</button></span></div>
 <div class="grid"><div><div class="card" id="slot-train"></div></div>
 <div class="card"><h2>Train a gesture</h2>
 <div class="row"><input id="gname" placeholder="Gesture name e.g. Hello" list="sugg" maxlength="60"><datalist id="sugg"></datalist></div>
@@ -267,6 +267,48 @@ textarea{min-width:0;max-width:100%}
 </form></div>
 <p class="muted lk-foot">This password protects training and gesture editing only. It does not lock the app. Recovery is stored locally in this browser.</p></div></div></div>
 
+<div id="accountOv" class="ov" role="dialog" aria-modal="true" aria-labelledby="accTitle" hidden>
+ <div class="lk" id="accountCard">
+  <div class="lk-head"><div class="lk-ico" aria-hidden="true">👤</div><h2 id="accTitle">Local accounts</h2><p class="lk-sub">Create a profile or sign in to another profile on this browser.</p></div>
+  <div class="lk-body">
+   <div id="accHome">
+    <p class="msg" id="accCurrent"></p>
+    <p class="muted">Each profile keeps its own trained gestures, history and settings in this browser.</p>
+    <div class="lk-act"><button type="button" id="accCreateShow">＋ Create new account</button><button type="button" class="alt" id="accLoginShow">↪ Log in to another account</button></div>
+    <div class="lk-act"><button type="button" class="ghost" id="accClose">Close</button></div>
+   </div>
+   <div id="accCreatePanel" hidden>
+    <form id="accCreateForm" autocomplete="off" novalidate>
+     <label class="muted" for="accName">Display name</label><div class="lk-field"><input id="accName" maxlength="40" placeholder="Your name"></div>
+     <label class="muted" for="accUsername">Username (3–24 letters/numbers/._-)</label><div class="lk-field"><input id="accUsername" maxlength="24" autocapitalize="none" placeholder="Choose a username"></div>
+     <label class="muted" for="accPassword">Password (at least 8 characters)</label><div class="lk-field"><input id="accPassword" type="password" maxlength="128" autocomplete="new-password" placeholder="Create password"></div>
+     <label class="muted" for="accPassword2">Confirm password</label><div class="lk-field"><input id="accPassword2" type="password" maxlength="128" autocomplete="new-password" placeholder="Repeat password"></div>
+     <label class="muted" for="accHint">Password hint (3–80 characters)</label><div class="lk-field"><input id="accHint" maxlength="80" placeholder="A reminder only; not proof of identity"></div>
+     <div class="lk-err" id="accCreateErr" role="alert"></div>
+     <div class="lk-act"><button type="submit" id="accCreateGo">Create account</button><button type="button" class="ghost" id="accCreateBack">Back</button></div>
+    </form>
+   </div>
+   <div id="accLoginPanel" hidden>
+    <form id="accLoginForm" autocomplete="off" novalidate>
+     <label class="muted" for="accLoginUsername">Username</label><div class="lk-field"><input id="accLoginUsername" maxlength="24" autocapitalize="none" placeholder="Enter username"></div>
+     <label class="muted" for="accLoginPassword">Password</label><div class="lk-field"><input id="accLoginPassword" type="password" maxlength="128" autocomplete="current-password" placeholder="Enter password"></div>
+     <div class="lk-err" id="accLoginErr" role="alert"></div>
+     <div class="lk-act"><button type="submit" id="accLoginGo">Log in</button><button type="button" class="ghost" id="accForgotShow">Forgot password?</button><button type="button" class="ghost" id="accLoginBack">Back</button></div>
+    </form>
+    <form id="accRecoverForm" autocomplete="off" novalidate hidden>
+     <p class="muted">Reset the password for the username entered above. You need that profile's recovery code.</p>
+     <label class="muted" for="accRecoveryCode">Recovery code</label><div class="lk-field"><input id="accRecoveryCode" maxlength="40" autocapitalize="characters" placeholder="XXXX-XXXX-XXXX-XXXX-XXXX-XXXX"></div>
+     <label class="muted" for="accResetPassword">New password (at least 8 characters)</label><div class="lk-field"><input id="accResetPassword" type="password" maxlength="128" autocomplete="new-password" placeholder="New password"></div>
+     <label class="muted" for="accResetPassword2">Confirm new password</label><div class="lk-field"><input id="accResetPassword2" type="password" maxlength="128" autocomplete="new-password" placeholder="Repeat new password"></div>
+     <div class="lk-err" id="accRecoverErr" role="alert"></div>
+     <div class="lk-act"><button type="submit" id="accRecoverGo">Reset password</button><button type="button" class="ghost" id="accRecoverBack">Back to login</button></div>
+    </form>
+   </div>
+   <p class="muted lk-foot">Accounts are stored only in this browser. They do not sync between devices and are not server-backed or suitable for protecting sensitive information.</p>
+  </div>
+ </div>
+</div>
+
 <!-- shared camera panel (moved between Live and Train pages) -->
 <div id="camBox" style="display:none">
 <h2>Camera</h2>
@@ -282,6 +324,35 @@ textarea{min-width:0;max-width:100%}
 <b>Not listed?</b> Restart the browser after installing the driver, check no other app holds the camera, and confirm the client says "connected". The app never selects another camera without telling you.</p></details></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/hands.js" crossorigin="anonymous"></script>
+<script>
+/* Local account profiles. These are browser-local profiles, not cloud accounts. */
+(function(){
+ const LIST_KEY='sl_accounts_v1',ACTIVE_KEY='sl_active_account_v1';
+ const safeRead=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}};
+ let list=safeRead(LIST_KEY);if(!Array.isArray(list))list=[];
+ if(!list.length){
+  const legacyId='local-owner';
+  const oldAuth=localStorage.getItem('sl_auth_v2');
+  const oldData=localStorage.getItem('sl_v1');
+  if(oldAuth&&!localStorage.getItem('sl_auth_v2_'+legacyId))localStorage.setItem('sl_auth_v2_'+legacyId,oldAuth);
+  if(oldData&&!localStorage.getItem('sl_v1_'+legacyId))localStorage.setItem('sl_v1_'+legacyId,oldData);
+  list=[{id:legacyId,username:'owner',name:'Existing local profile',createdAt:Date.now()}];
+  try{localStorage.setItem(LIST_KEY,JSON.stringify(list))}catch(e){}
+  try{localStorage.removeItem('sl_auth_v2');localStorage.removeItem('sl_v1')}catch(e){}
+ }
+ let active=localStorage.getItem(ACTIVE_KEY);
+ if(!list.some(a=>a&&a.id===active))active=list[0].id;
+ try{localStorage.setItem(ACTIVE_KEY,active)}catch(e){}
+ window.SLAccount={
+  get activeId(){return active},
+  get active(){return list.find(a=>a.id===active)||list[0]},
+  all(){return list.slice()},
+  find(username){const u=String(username||'').trim().toLowerCase();return list.find(a=>a.username===u)||null},
+  add(account){list.push(account);try{localStorage.setItem(LIST_KEY,JSON.stringify(list));return true}catch(e){list.pop();return false}},
+  activate(id){if(!list.some(a=>a.id===id))return false;active=id;try{localStorage.setItem(ACTIVE_KEY,id);return true}catch(e){return false}}
+ };
+})();
+</script>
 <script>
 /* ===== SignSpeak security core: runs BEFORE the app script. Private state lives in closures. ===== */
 class AuthError extends Error{constructor(m){super(m);this.name='AuthError'}}
@@ -303,11 +374,11 @@ function _pbkdf2js(pw,salt,iter){if(pw.length>64)pw=_sha256(pw);const ip=new Uin
  const hm=(msgLen,msg)=>{const a=new Uint8Array(64+msgLen);a.set(ip.subarray(0,64));a.set(msg,64);const inner=_sha256(a);op.set(inner,64);return _sha256(op.subarray(0,96))};
  const s=new Uint8Array(salt.length+4);s.set(salt);s[s.length-1]=1;let u=hm(s.length,s);const t=Uint8Array.from(u);
  for(let i=1;i<iter;i++){u=hm(32,u);for(let j=0;j<32;j++)t[j]^=u[j]}return t}
-/* ---- Local training-password setup and verification ----
-   This is a browser-local training gate, not user-account authentication.
+/* ---- Local profile-password setup and verification ----
+   The profile credential is also used as the training-area lock. It is browser-local, not cloud authentication.
    There is deliberately no built-in/default password. */
 const Auth=(()=>{
- const KEY='sl_auth_v2',LEGACY_KEY='sl_auth_v1',IDLE=5*60*1000,ITER=100000,MAXTRY=5,enc=new TextEncoder();
+ const ACCOUNT_ID=window.SLAccount.activeId,KEY='sl_auth_v2_'+ACCOUNT_ID,LEGACY_KEY='sl_auth_v1',IDLE=5*60*1000,ITER=100000,MAXTRY=5,enc=new TextEncoder();
  let sess=false,last=0,timer=null,busy=false,rec=null;const cbChange=[],cbTick=[];
  const hex=u=>Array.from(u,b=>b.toString(16).padStart(2,'0')).join('');
  const unhex=s=>Uint8Array.from(s.match(/../g)||[],h=>parseInt(h,16));
@@ -366,6 +437,37 @@ const Auth=(()=>{
   if(!persist()){rec=prev;return{ok:false,error:'Could not save the new password. Check browser storage and try again.'}}
   const r=await login(nw);if(!r.ok){rec=prev;persist();return r}return{ok:true,recoveryCode:newCode};
  }
+ /* Local profile helpers. Passwords are salted PBKDF2 verifiers, never stored as plain text. */
+ async function createCredentialFor(id,pw,hint){
+  if(!/^[a-z0-9_-]{8,80}$/.test(String(id||'')))return{ok:false,error:'Invalid account identifier.'};
+  if(typeof pw!=='string'||pw.length<8||pw.length>128)return{ok:false,error:'Password must be 8–128 characters.'};
+  hint=String(hint||'').trim();if(hint.length<3||hint.length>80)return{ok:false,error:'Enter a password hint between 3 and 80 characters.'};
+  const key='sl_auth_v2_'+id;if(localStorage.getItem(key))return{ok:false,error:'This account already has a password.'};
+  const recoveryCode=newRecoveryCode(),next=await make(pw);next.hint=hint;next.recovery=await recoveryRecord(recoveryCode);
+  try{localStorage.setItem(key,JSON.stringify(next));return{ok:true,recoveryCode}}catch(e){return{ok:false,error:'Could not save this account. Browser storage may be full or blocked.'}}
+ }
+ async function verifyAccount(id,pw){
+  const key='sl_auth_v2_'+id;let r=null;try{r=JSON.parse(localStorage.getItem(key))}catch(e){}
+  if(!valid(r))return{ok:false,error:'This profile has no password yet. Open Train Gestures for that profile and create one first.'};
+  if(typeof pw!=='string'||!pw||pw.length>128)return{ok:false,error:'Enter the correct password.'};
+  const now=Date.now();if(r.until>now)return{ok:false,error:'Too many attempts. Try again in '+Math.ceil((r.until-now)/1000)+' seconds.'};
+  let good=false;try{good=eq(hex(await derive(pw,unhex(r.salt),r.iter)),r.hash)}catch(e){return{ok:false,error:'Password verification is unavailable in this browser.'}}
+  if(good){r.fails=0;r.until=0;try{localStorage.setItem(key,JSON.stringify(r))}catch(e){}return{ok:true}}
+  r.fails=(r.fails||0)+1;if(r.fails%MAXTRY===0)r.until=Date.now()+Math.min(600,30*Math.pow(2,r.fails/MAXTRY-1))*1000;
+  try{localStorage.setItem(key,JSON.stringify(r))}catch(e){}
+  const left=MAXTRY-r.fails%MAXTRY;return{ok:false,error:r.until>Date.now()?'Too many attempts. Try again in '+Math.ceil((r.until-Date.now())/1000)+' seconds.':'Incorrect username or password. '+left+' attempt'+(left===1?'':'s')+' left before a temporary lockout.'};
+ }
+ async function resetAccountWithRecovery(id,code,nw){
+  const key='sl_auth_v2_'+id;let r=null;try{r=JSON.parse(localStorage.getItem(key))}catch(e){}
+  if(!valid(r)||!r.recovery||typeof r.recovery.salt!=='string'||typeof r.recovery.hash!=='string')return{ok:false,error:'No recovery code is configured for this profile.'};
+  if(typeof nw!=='string'||nw.length<8||nw.length>128)return{ok:false,error:'New password must be 8–128 characters.'};
+  const now=Date.now();if(r.until>now)return{ok:false,locked:true,error:'Too many attempts. Try again in '+Math.ceil((r.until-now)/1000)+' seconds.'};
+  const normalized=normalizeCode(code);if(normalized.length!==24)return{ok:false,error:'Enter the complete recovery code.'};
+  let good=false;try{good=eq(hex(await derive(normalized,unhex(r.recovery.salt),r.recovery.iter||ITER)),r.recovery.hash)}catch(e){return{ok:false,error:'Recovery verification is unavailable in this browser.'}}
+  if(!good){r.fails=(r.fails||0)+1;if(r.fails%MAXTRY===0)r.until=Date.now()+Math.min(600,30*Math.pow(2,r.fails/MAXTRY-1))*1000;try{localStorage.setItem(key,JSON.stringify(r))}catch(e){}return{ok:false,error:r.until>Date.now()?'Too many attempts. Try again in '+Math.ceil((r.until-Date.now())/1000)+' seconds.':'Incorrect recovery code.'}}
+  const recoveryCode=newRecoveryCode(),next=await make(nw);next.hint=r.hint||'';next.recovery=await recoveryRecord(recoveryCode);
+  try{localStorage.setItem(key,JSON.stringify(next));return{ok:true,recoveryCode}}catch(e){return{ok:false,error:'Could not save the new password. Check browser storage and try again.'}}
+ }
  /* Password check with temporary throttling after repeated failures. */
  async function check(pw){await ready;if(!valid(rec))return{ok:false,needsSetup:true,error:'No training password is configured. Create one to continue.'};
   if(typeof pw!=='string'||!pw)return{ok:false,error:'Enter the password.'};
@@ -392,7 +494,7 @@ const Auth=(()=>{
  ['pointerdown','keydown','touchstart','wheel','mousemove','scroll'].forEach(ev=>addEventListener(ev,touch,{passive:true,capture:true}));
  document.addEventListener('visibilitychange',()=>{if(sess&&Date.now()-last>IDLE)lock('idle')});
  addEventListener('storage',e=>{if(e.key===KEY||e.key===null){const s=stored();rec=valid(s)?s:null;lock('changed')}}); // clearing storage also clears the in-memory credential in other open tabs
- return Object.freeze({IDLE_MS:IDLE,ready,hasPassword:async()=>{await ready;return valid(rec)},getHint:()=>rec&&typeof rec.hint==='string'?rec.hint:'',isUnlocked:()=>sess&&Date.now()-last<=IDLE,require:require_,login,setupPassword,configureRecovery,resetWithRecovery,lock,logout:()=>lock('logout'),touch,changePassword,
+ return Object.freeze({IDLE_MS:IDLE,ready,hasPassword:async()=>{await ready;return valid(rec)},getHint:()=>rec&&typeof rec.hint==='string'?rec.hint:'',isUnlocked:()=>sess&&Date.now()-last<=IDLE,require:require_,login,setupPassword,configureRecovery,resetWithRecovery,createCredentialFor,verifyAccount,resetAccountWithRecovery,lock,logout:()=>lock('logout'),touch,changePassword,
   remaining:()=>sess?Math.max(0,IDLE-(Date.now()-last)):0,
   lockoutLeft:()=>Math.max(0,Math.ceil(((rec&&rec.until)||0)/1000-Date.now()/1000)),
   onChange:f=>{cbChange.push(f)},onTick:f=>{cbTick.push(f)}})})();
@@ -418,14 +520,82 @@ const Model=(()=>{
 </script>
 <script>
 const $=id=>document.getElementById(id), esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+// ---------- local account/profile management ----------
+function accountMessage(id,msg){const el=$(id);if(el){el.textContent=msg;el.classList.toggle('show',!!msg)}}
+function showAccountView(which){$('accHome').hidden=which!=='home';$('accCreatePanel').hidden=which!=='create';$('accLoginPanel').hidden=which!=='login';accountMessage('accCreateErr','');accountMessage('accLoginErr','')}
+function openAccountPanel(){
+ const a=window.SLAccount.active;
+ $('accCurrent').textContent='Current profile: '+(a.name||a.username)+'  (@'+a.username+')';
+ showAccountView('home');$('accountOv').hidden=false;document.body.style.overflow='hidden';
+ document.querySelector('nav').inert=true;document.querySelector('main').inert=true;
+}
+function closeAccountPanel(){ $('accountOv').hidden=true;document.body.style.overflow='';document.querySelector('nav').inert=false;document.querySelector('main').inert=false; }
+$('accClose').addEventListener('click',closeAccountPanel);
+$('accCreateShow').addEventListener('click',()=>showAccountView('create'));
+$('accLoginShow').addEventListener('click',()=>showAccountView('login'));
+$('accCreateBack').addEventListener('click',()=>showAccountView('home'));
+$('accLoginBack').addEventListener('click',()=>showAccountView('home'));
+$('accForgotShow').addEventListener('click',()=>{if(!$('accLoginUsername').value.trim()){accountMessage('accLoginErr','Enter the username first.');return}$('accLoginForm').hidden=true;$('accRecoverForm').hidden=false;accountMessage('accRecoverErr','')});
+$('accRecoverBack').addEventListener('click',()=>{$('accRecoverForm').hidden=true;$('accLoginForm').hidden=false;accountMessage('accRecoverErr','')});
+$('accCreateForm').addEventListener('submit',async e=>{
+ e.preventDefault();const name=$('accName').value.trim(),username=$('accUsername').value.trim().toLowerCase(),pw=$('accPassword').value,pw2=$('accPassword2').value,hint=$('accHint').value.trim();
+ if(name.length<2){accountMessage('accCreateErr','Enter a display name with at least 2 characters.');return}
+ if(!/^[a-z0-9._-]{3,24}$/.test(username)){accountMessage('accCreateErr','Username must be 3–24 characters: letters, numbers, dot, underscore or hyphen.');return}
+ if(window.SLAccount.find(username)){accountMessage('accCreateErr','That username is already in use on this browser.');return}
+ if(pw!==pw2){accountMessage('accCreateErr','The passwords do not match.');return}
+ if(pw.length<8||pw.length>128){accountMessage('accCreateErr','Password must be 8–128 characters.');return}
+ if(hint.length<3||hint.length>80){accountMessage('accCreateErr','Enter a password hint between 3 and 80 characters.');return}
+ const btn=$('accCreateGo');btn.disabled=true;btn.textContent='Creating…';
+ try{
+  const id='user_'+Array.from(crypto.getRandomValues(new Uint8Array(12)),b=>b.toString(16).padStart(2,'0')).join('');
+  const credential=await Auth.createCredentialFor(id,pw,hint);
+  if(!credential.ok){accountMessage('accCreateErr',credential.error);return}
+  const added=window.SLAccount.add({id,username,name,createdAt:Date.now()});
+  if(!added){localStorage.removeItem('sl_auth_v2_'+id);accountMessage('accCreateErr','Could not save the account list. Browser storage may be full or blocked.');return}
+  if(!window.SLAccount.activate(id)){accountMessage('accCreateErr','Account was created but could not be selected. Reload and sign in.');return}
+  alert('Account created successfully. Save this password recovery code somewhere safe; it is shown only once:\n\n'+credential.recoveryCode+'\n\nThe account and its data are stored only in this browser.');
+  location.reload();
+ }catch(err){accountMessage('accCreateErr','Account creation failed. Check browser storage and try again.')}
+ finally{btn.disabled=false;btn.textContent='Create account'}
+});
+$('accLoginForm').addEventListener('submit',async e=>{
+ e.preventDefault();const username=$('accLoginUsername').value.trim().toLowerCase(),pw=$('accLoginPassword').value;
+ const account=window.SLAccount.find(username);if(!account){accountMessage('accLoginErr','No profile with that username exists in this browser.');return}
+ const btn=$('accLoginGo');btn.disabled=true;btn.textContent='Checking…';
+ try{
+  const result=await Auth.verifyAccount(account.id,pw);
+  if(!result.ok){accountMessage('accLoginErr',result.error||'Login failed.');return}
+  if(!window.SLAccount.activate(account.id)){accountMessage('accLoginErr','Could not switch to this profile.');return}
+  alert('Signed in to '+account.name+'. The profile data will load now. Training editing has its own lock and may ask for this profile password again.');
+  location.reload();
+ }catch(err){accountMessage('accLoginErr','Could not verify this account in browser storage.')}
+ finally{btn.disabled=false;btn.textContent='Log in'}
+});
+$('accRecoverForm').addEventListener('submit',async e=>{
+ e.preventDefault();const username=$('accLoginUsername').value.trim().toLowerCase(),account=window.SLAccount.find(username),code=$('accRecoveryCode').value,nw=$('accResetPassword').value,nw2=$('accResetPassword2').value;
+ if(!account){accountMessage('accRecoverErr','No profile with that username exists in this browser.');return}
+ if(nw!==nw2){accountMessage('accRecoverErr','The new passwords do not match.');return}
+ const btn=$('accRecoverGo');btn.disabled=true;btn.textContent='Resetting…';
+ try{
+  const result=await Auth.resetAccountWithRecovery(account.id,code,nw);
+  if(!result.ok){accountMessage('accRecoverErr',result.error||'Password reset failed.');return}
+  if(!window.SLAccount.activate(account.id)){accountMessage('accRecoverErr','Password was reset, but the profile could not be selected.');return}
+  alert('Password reset successfully. Save the new recovery code; the old code no longer works:\n\n'+result.recoveryCode);
+  location.reload();
+ }catch(err){accountMessage('accRecoverErr','Password reset failed. Check the recovery code and try again.')}
+ finally{btn.disabled=false;btn.textContent='Reset password'}
+});
+$('accountOv').addEventListener('click',e=>{if(e.target===$('accountOv'))closeAccountPanel()});
 const SUGG=['Hello','Thank You','Yes','No','Please','Help','Stop','Water','Sorry','Neutral'];
 const DEF={hist:[],set:{thr:.6,stab:8,pause:0,rate:1,voice:'',auto:false,cam:'',facing:'environment'}};
-let S,_st=null;try{_st=JSON.parse(localStorage.getItem('sl_v1'))}catch(e){}
+const DATA_KEY='sl_v1_'+window.SLAccount.activeId;
+let S,_st=null;try{_st=JSON.parse(localStorage.getItem(DATA_KEY))}catch(e){}
 S={hist:Array.isArray(_st&&_st.hist)?_st.hist:[],set:Object.assign({},DEF.set,_st&&_st.set)};
 Model.init(_st&&_st.gest&&typeof _st.gest==='object'?_st.gest:{}); // existing gestures are preserved (same sl_v1 format)
 const GEST=Model.view; // read-only view: any direct write throws
 function payload(){return JSON.stringify({gest:GEST,hist:S.hist,set:S.set})}
-function save(){try{const p=payload();localStorage.setItem('sl_v1',p);return localStorage.getItem('sl_v1')===p}catch(e){return false}}
+function save(){try{const p=payload();localStorage.setItem(DATA_KEY,p);return localStorage.getItem(DATA_KEY)===p}catch(e){return false}}
 // ---------- routing ----------
 let prevHash='#home',curHash='#home';
 function route(){const h=(location.hash||'#home').slice(1);const cur='#'+h;if(cur!==curHash){if(curHash!=='#train')prevHash=curHash;curHash=cur}
@@ -562,7 +732,7 @@ function stopSpeak(){if(hasTTS){speechSynthesis.cancel();$('spmsg').textContent=
 let lkResolve=null,lkOpts=null,lkKind='',lkBusy=false,lkTimer=null,lockWhy='',pendingName='';
 const lkIsOpen=()=>!$('lockOv').hidden;
 const fmt=ms=>{const s=Math.max(0,Math.ceil(ms/1000));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
-function paintAuth(){const u=Auth.isUnlocked(),c=$('authChip');c.textContent=u?'🔓 '+fmt(Auth.remaining()):'🔒 Training';c.className=u?'alt':'ghost';
+function paintAuth(){const u=Auth.isUnlocked(),c=$('authChip'),a=window.SLAccount.active,b=$('accountBtn');if(b){b.textContent='👤 '+a.username;b.title='Active local profile: '+a.name+' (@'+a.username+')'}c.textContent=u?'🔓 '+fmt(Auth.remaining()):'🔒 Training';c.className=u?'alt':'ghost';
  c.title=u?'Training unlocked — click to lock now. Auto-locks after 5 minutes of inactivity.':'Training access is protected; the rest of the app remains available.';
  $('navTrain').textContent=u?'Train Gestures':'Train Gestures 🔒';
  const t=$('authTimer');if(t)t.textContent=u?'Auto-locks after '+fmt(Auth.remaining())+' of inactivity':'';
@@ -629,7 +799,7 @@ function ensureUnlocked(what){if(Auth.isUnlocked()){Auth.touch();return Promise.
  return askUnlock({kind:'action',title:'Training Password Required',sub:what+' requires the training password.'})}
 function chipClick(){if(Auth.isUnlocked())Auth.lock('manual');else askUnlock({kind:'action',title:'Training Access',sub:'Unlock to enable training and library editing.'})}
 function lockTraining(){Auth.lock('manual')}
-function logoutTraining(){location.hash='#home';Auth.logout()}
+function logoutTraining(){location.hash='#home';Auth.logout();openAccountPanel()}
 function buildTrain(){const host=$('trainHost');if(!host.firstElementChild)host.appendChild($('trainTpl').content.cloneNode(true));$('trainLocked').hidden=true;renderSugg();
  if(pendingName&&$('gname')){$('gname').value=pendingName;pendingName=''}paintAuth()}
 function teardownTrain(){cancelCap();testing=false;const host=$('trainHost'),cb=$('camBox');
@@ -695,7 +865,7 @@ function importData(file){if(!file)return;try{Auth.require()}catch(e){authDenied
   if(save()){$('libmsg').innerHTML='<div class="msg">Import complete.</div>';renderLib()}else{Model.restore(snap);S.hist=bakH;$('libmsg').innerHTML='<div class="msg err">Storage full; import cancelled.</div>'}}
  catch(e){if(authDenied(e))return;$('libmsg').innerHTML='<div class="msg err">Invalid file: not valid gesture data (63-value landmark samples expected).</div>'}};r.readAsText(file)}
 async function resetAll(){if(!await ensureUnlocked('Resetting all data'))return;if(!confirm('Delete ALL gestures, history and settings?'))return;
- try{Auth.require()}catch(e){authDenied(e);return}localStorage.removeItem('sl_v1');location.reload()} // the training password is stored separately and is kept
+ try{Auth.require()}catch(e){authDenied(e);return}localStorage.removeItem(DATA_KEY);location.reload()} // the training password is stored separately and is kept
 // ---------- settings wiring ----------
 function bindSet(){const t=$('thr'),s=$('stab'),p=$('pause'),rt=$('rate');t.value=S.set.thr;s.value=S.set.stab;p.value=S.set.pause;rt.value=S.set.rate;$('autoSp').checked=$('autoSp2').checked=S.set.auto;
  const upd=()=>{$('thv').textContent=(S.set.thr*100|0)+'%';$('stv').textContent=S.set.stab;$('rtv').textContent=S.set.rate+'×'};upd();

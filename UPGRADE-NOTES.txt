@@ -1,0 +1,11 @@
+SignSpeak AI Upgrade
+===================
+
+- Original application logic retained from the uploaded HTML.
+- Responsive mobile/tablet adjustments added.
+- Rear/front/auto camera preference added for phones.
+- PWA manifest, install action, service worker and offline fallback added.
+- Relative paths used for GitHub Pages project sites.
+- See README.md for deploy and device-data migration instructions.
+
+Before moving from localhost to GitHub Pages, export your existing gesture data/settings/history from the current browser. Browser local storage does not move with the website files.

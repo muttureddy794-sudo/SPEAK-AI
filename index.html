@@ -61,7 +61,7 @@ nav button{padding:6px 12px;font-size:.9rem}
 .lk-ico{width:78px;height:78px;margin:0 auto 8px;border-radius:50%;display:grid;place-items:center;font-size:2.5rem;background:rgba(0,0,0,.25);box-shadow:0 0 0 6px rgba(255,255,255,.18)}
 .lk-head h2{margin:0;font-size:1.35rem}.lk-sub{margin:6px 0 0;font-size:.92rem;opacity:.95}
 .lk-body{padding:18px}.lk-note{margin:0 0 12px;padding:8px 12px;border-radius:8px;background:rgba(255,201,60,.16);border-left:4px solid var(--yel);font-size:.9rem}
-.lk-field{display:flex;gap:8px}.lk-field input{flex:1;min-width:0;font-size:1.05rem;letter-spacing:.12em}.lk-field button{padding:8px 12px}
+.lk-field{display:flex;gap:8px}.lk-field[hidden]{display:none}.lk-field input{flex:1;min-width:0;font-size:1.05rem;letter-spacing:.12em}.lk-field button{padding:8px 12px}
 .lk-err{display:none;margin-top:10px;padding:9px 12px;border-radius:8px;background:rgba(230,57,70,.16);border-left:4px solid var(--red);font-weight:600;font-size:.92rem}.lk-err.show{display:block}
 .lk-act{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.lk-act button{flex:1 1 130px;padding:11px 14px}
 .lk-foot{margin:12px 0 0;text-align:center}
@@ -200,13 +200,12 @@ textarea{min-width:0;max-width:100%}
 
 <section id="train" class="page">
 <div id="trainLocked" class="card lockcard"><div class="big">🔒</div><h2>Training Module Locked</h2>
-<p class="muted">Capturing samples, updating gestures and training the model require the administrator password. Live recognition, the camera and speech stay available.</p>
+<p class="muted">Capturing samples, updating gestures and training the model require your training password. Live recognition, the camera and speech stay available.</p>
 <button type="button" onclick="openTrainLock()">🔑 Enter password</button></div>
 <div id="trainHost"></div>
 <template id="trainTpl">
 <div class="card tbar"><span class="badge" id="authBadge">🔓 Training unlocked</span><span class="muted" id="authTimer"></span>
 <span class="sp"><button type="button" class="alt" onclick="lockTraining()">🔒 Lock Training</button><button type="button" class="ghost" onclick="logoutTraining()">⎋ Logout</button></span></div>
-<div id="defWarn" class="msg err" hidden>⚠ The default password (1234) is still in use. Change it in the Security panel below.</div>
 <div class="grid"><div><div class="card" id="slot-train"></div></div>
 <div class="card"><h2>Train a gesture</h2>
 <div class="row"><input id="gname" placeholder="Gesture name e.g. Hello" list="sugg" maxlength="60"><datalist id="sugg"></datalist></div>
@@ -216,9 +215,14 @@ textarea{min-width:0;max-width:100%}
 <div id="trmsg"></div><div class="muted" id="testout"></div></div></div>
 <details class="card"><summary>🔐 Security — change training password</summary>
 <div class="row"><input type="password" id="pwCur" placeholder="Current password" autocomplete="off" maxlength="128"></div>
-<div class="row"><input type="password" id="pwNew" placeholder="New password (min 4 characters)" autocomplete="off" maxlength="128"><input type="password" id="pwNew2" placeholder="Repeat new password" autocomplete="off" maxlength="128"></div>
+<div class="row"><input type="password" id="pwNew" placeholder="New password (min 8 characters)" autocomplete="off" maxlength="128"><input type="password" id="pwNew2" placeholder="Repeat new password" autocomplete="off" maxlength="128"></div>
 <div class="row"><button type="button" onclick="changePw()">Change password</button></div><div id="pwMsg"></div>
-<p class="muted">The training session locks automatically after 5 minutes without activity. Use a password of 8+ characters.</p></details>
+<hr style="border:0;border-top:1px solid var(--line);margin:14px 0">
+<h3>🔑 Password recovery</h3>
+<p class="muted">Set a hint and generate a recovery code. Save the code somewhere safe; it is shown only once. The hint is a reminder, not proof of identity.</p>
+<div class="row"><input type="text" id="pwHint" maxlength="80" placeholder="Password hint (3–80 characters)"><button type="button" class="ghost" onclick="configureRecovery()">Generate recovery code</button></div>
+<div id="recoveryMsg" class="msg" hidden></div><div class="row"><button type="button" class="ghost" id="recoveryCopy" onclick="copyRecoveryCode()" hidden>Copy recovery code</button></div>
+<p class="muted">The training session locks automatically after 5 minutes without activity. Use a password of at least 8 characters.</p></details>
 </template></section>
 
 <section id="library" class="page"><div class="card"><h2>Gesture library</h2>
@@ -243,11 +247,25 @@ textarea{min-width:0;max-width:100%}
 <div id="lockOv" class="ov" role="dialog" aria-modal="true" aria-labelledby="lkT" hidden>
 <div class="lk" id="lkCard"><div class="lk-head"><div class="lk-ico" aria-hidden="true">🔒</div><h2 id="lkT">Training Module Locked</h2><p class="lk-sub" id="lkSub"></p></div>
 <div class="lk-body"><p class="lk-note" id="lkNote" hidden></p>
-<form id="lkForm" autocomplete="off" novalidate><label for="lkPw" class="muted">Administrator password</label>
-<div class="lk-field"><input id="lkPw" type="password" maxlength="128" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Enter password"><button type="button" class="ghost" id="lkEye" aria-label="Show password" aria-pressed="false">👁</button></div>
+<form id="lkForm" autocomplete="off" novalidate><label for="lkPw" class="muted" id="lkPwLabel">Training password</label>
+<div class="lk-field"><input id="lkPw" type="password" maxlength="128" autocomplete="new-password" autocapitalize="off" spellcheck="false" placeholder="Enter training password"><button type="button" class="ghost" id="lkEye" aria-label="Show password" aria-pressed="false">👁</button></div>
+<label for="lkPwConfirm" class="muted" id="lkConfirmLabel" hidden>Confirm new password</label>
+<div class="lk-field" id="lkConfirmWrap" hidden><input id="lkPwConfirm" type="password" maxlength="128" autocomplete="new-password" autocapitalize="off" spellcheck="false" placeholder="Confirm training password"></div>
+<label for="lkHint" class="muted" id="lkHintLabel" hidden>Password hint (3–80 characters)</label>
+<div class="lk-field" id="lkHintWrap" hidden><input id="lkHint" type="text" maxlength="80" autocomplete="off" placeholder="Example: My favourite subject"></div>
 <div class="lk-err" id="lkErr" role="alert" aria-live="assertive"></div>
 <div class="lk-act"><button type="submit" id="lkGo">🔓 Unlock</button><button type="button" class="ghost" id="lkNo">Cancel</button></div></form>
-<p class="muted lk-foot">Protected: training, gesture update, rename &amp; delete, import and reset.</p></div></div></div>
+<button type="button" class="ghost" id="lkForgot" hidden>Forgot password?</button>
+<div id="lkRecoverPanel" hidden>
+<p class="muted" id="lkRecoverHint">Password hint: none saved</p>
+<form id="lkRecoverForm" autocomplete="off" novalidate>
+<label class="muted" for="lkRecoveryCode">Recovery code</label><div class="lk-field"><input id="lkRecoveryCode" type="text" maxlength="40" autocapitalize="characters" spellcheck="false" placeholder="XXXX-XXXX-XXXX-XXXX-XXXX-XXXX"></div>
+<label class="muted" for="lkResetNew">New password (at least 8 characters)</label><div class="lk-field"><input id="lkResetNew" type="password" maxlength="128" autocomplete="new-password" placeholder="New training password"></div>
+<label class="muted" for="lkResetConfirm">Confirm new password</label><div class="lk-field"><input id="lkResetConfirm" type="password" maxlength="128" autocomplete="new-password" placeholder="Repeat new password"></div>
+<div class="lk-err" id="lkRecoverErr" role="alert" aria-live="assertive"></div>
+<div class="lk-act"><button type="submit" id="lkRecoverGo">Reset password</button><button type="button" class="ghost" id="lkBack">Back to sign in</button></div>
+</form></div>
+<p class="muted lk-foot">This password protects training and gesture editing only. It does not lock the app. Recovery is stored locally in this browser.</p></div></div></div>
 
 <!-- shared camera panel (moved between Live and Train pages) -->
 <div id="camBox" style="display:none">
@@ -285,9 +303,11 @@ function _pbkdf2js(pw,salt,iter){if(pw.length>64)pw=_sha256(pw);const ip=new Uin
  const hm=(msgLen,msg)=>{const a=new Uint8Array(64+msgLen);a.set(ip.subarray(0,64));a.set(msg,64);const inner=_sha256(a);op.set(inner,64);return _sha256(op.subarray(0,96))};
  const s=new Uint8Array(salt.length+4);s.set(salt);s[s.length-1]=1;let u=hm(s.length,s);const t=Uint8Array.from(u);
  for(let i=1;i<iter;i++){u=hm(32,u);for(let j=0;j<32;j++)t[j]^=u[j]}return t}
-/* ---- Auth ---- */
+/* ---- Local training-password setup and verification ----
+   This is a browser-local training gate, not user-account authentication.
+   There is deliberately no built-in/default password. */
 const Auth=(()=>{
- const KEY='sl_auth_v1',IDLE=5*60*1000,ITER=100000,MAXTRY=5,enc=new TextEncoder();
+ const KEY='sl_auth_v2',LEGACY_KEY='sl_auth_v1',IDLE=5*60*1000,ITER=100000,MAXTRY=5,enc=new TextEncoder();
  let sess=false,last=0,timer=null,busy=false,rec=null;const cbChange=[],cbTick=[];
  const hex=u=>Array.from(u,b=>b.toString(16).padStart(2,'0')).join('');
  const unhex=s=>Uint8Array.from(s.match(/../g)||[],h=>parseInt(h,16));
@@ -299,17 +319,56 @@ const Auth=(()=>{
   try{if(globalThis.crypto&&crypto.subtle){const k=await crypto.subtle.importKey('raw',pb,'PBKDF2',false,['deriveBits']);
    return new Uint8Array(await crypto.subtle.deriveBits({name:'PBKDF2',hash:'SHA-256',salt,iterations:iter},k,256))}}catch(e){}
   await new Promise(r=>setTimeout(r,0));return _pbkdf2js(pb,salt,iter)}
- async function make(pw,def){const salt=crypto.getRandomValues(new Uint8Array(16));
-  return{v:1,iter:ITER,salt:hex(salt),hash:hex(await derive(pw,salt,ITER)),def:!!def,fails:0,until:0}}
+ async function make(pw){const salt=crypto.getRandomValues(new Uint8Array(16));
+  return{v:2,iter:ITER,salt:hex(salt),hash:hex(await derive(pw,salt,ITER)),fails:0,until:0}}
+ const normalizeCode=code=>String(code||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+ function newRecoveryCode(){const b=crypto.getRandomValues(new Uint8Array(12));return hex(b).toUpperCase().match(/.{1,4}/g).join('-')}
+ async function recoveryRecord(code){const salt=crypto.getRandomValues(new Uint8Array(16));return{salt:hex(salt),hash:hex(await derive(normalizeCode(code),salt,ITER)),iter:ITER}}
  rec=stored();
- const ready=(async()=>{if(!valid(rec)){rec=await make('1234',true);persist()}})(); // first run / upgrade: initial password 1234
+ const ready=(async()=>{
+  // v2 intentionally starts a fresh training-password setup after this upgrade.
+  // Gesture records/settings live under a separate key and are not touched.
+  try{localStorage.removeItem(LEGACY_KEY)}catch(e){}
+  if(!valid(rec))rec=null;
+ })();
  const fire=(u,why)=>cbChange.slice().forEach(f=>{try{f(u,why)}catch(e){console.error(e)}});
  function lock(why){const was=sess;sess=false;clearInterval(timer);timer=null;if(was)fire(false,why||'manual')}
  function touch(){if(!sess)return;const n=Date.now();if(n-last>IDLE){lock('idle');return}last=n}
- function require_(){if(!sess)throw new AuthError('Training is locked. Enter the administrator password to continue.');
+ function require_(){if(!sess)throw new AuthError('Training is locked. Enter the training password to continue.');
   if(Date.now()-last>IDLE){lock('idle');throw new AuthError('Session expired after 5 minutes of inactivity. Enter the password again.')}}
- /* password check with brute-force throttling (shared by login and password change) */
- async function check(pw){await ready;if(typeof pw!=='string'||!pw)return{ok:false,error:'Enter the password.'};
+ async function setupPassword(pw,hint){await ready;
+  if(valid(rec))return{ok:false,error:'A training password is already configured. Sign in and use Security settings.'};
+  if(typeof pw!=='string'||pw.length<8)return{ok:false,error:'Use at least 8 characters for your training password.'};
+  if(pw.length>128)return{ok:false,error:'Password is too long (max 128 characters).'};
+  hint=String(hint||'').trim();if(hint.length<3||hint.length>80)return{ok:false,error:'Enter a password hint between 3 and 80 characters.'};
+  const recoveryCode=newRecoveryCode(),next=await make(pw);next.hint=hint;next.recovery=await recoveryRecord(recoveryCode);rec=next;
+  if(!persist()){rec=null;return{ok:false,error:'Could not save the password and recovery information. Check browser storage and try again.'}}
+  const r=await login(pw);return r.ok?{ok:true,recoveryCode}:r; // Sign in immediately after first-time setup.
+ }
+ async function configureRecovery(hint){require_();hint=String(hint||'').trim();
+  if(hint.length<3||hint.length>80)return{ok:false,error:'Enter a password hint between 3 and 80 characters.'};
+  const prev=rec,code=newRecoveryCode();rec={...rec,hint,recovery:await recoveryRecord(code)};
+  if(!persist()){rec=prev;return{ok:false,error:'Could not save recovery settings. Check browser storage and try again.'}}
+  return{ok:true,recoveryCode:code};
+ }
+ async function resetWithRecovery(code,nw){await ready;
+  if(!valid(rec))return{ok:false,error:'No training password is configured.'};
+  if(!rec.recovery||typeof rec.recovery.salt!=='string'||typeof rec.recovery.hash!=='string')return{ok:false,error:'No recovery code is configured. If you can still unlock training, set one in Security settings.'};
+  if(typeof nw!=='string'||nw.length<8)return{ok:false,error:'New password must be at least 8 characters.'};
+  if(nw.length>128)return{ok:false,error:'New password is too long (max 128 characters).'};
+  const now=Date.now();if(rec.until>now)return{ok:false,locked:true,wait:Math.ceil((rec.until-now)/1000),error:'Too many attempts. Try again later.'};
+  const normalized=normalizeCode(code);if(normalized.length!==24)return{ok:false,error:'Enter the complete recovery code.'};
+  if(busy)return{ok:false,error:'Please wait…'};busy=true;let good=false;
+  try{good=eq(hex(await derive(normalized,unhex(rec.recovery.salt),rec.recovery.iter||ITER)),rec.recovery.hash)}catch(e){busy=false;return{ok:false,error:'Recovery check is unavailable in this browser.'}}
+  busy=false;
+  if(!good){rec.fails=(rec.fails||0)+1;let wait=0;if(rec.fails%MAXTRY===0){wait=Math.min(600,30*Math.pow(2,rec.fails/MAXTRY-1));rec.until=Date.now()+wait*1000}persist();return wait?{ok:false,locked:true,wait,error:'Incorrect recovery code.'}:{ok:false,error:'Incorrect recovery code. '+(MAXTRY-rec.fails%MAXTRY)+' attempts left before a temporary lockout.'}}
+  const prev=rec,hint=rec.hint||'',newCode=newRecoveryCode(),next=await make(nw);next.hint=hint;next.recovery=await recoveryRecord(newCode);rec=next;
+  if(!persist()){rec=prev;return{ok:false,error:'Could not save the new password. Check browser storage and try again.'}}
+  const r=await login(nw);if(!r.ok){rec=prev;persist();return r}return{ok:true,recoveryCode:newCode};
+ }
+ /* Password check with temporary throttling after repeated failures. */
+ async function check(pw){await ready;if(!valid(rec))return{ok:false,needsSetup:true,error:'No training password is configured. Create one to continue.'};
+  if(typeof pw!=='string'||!pw)return{ok:false,error:'Enter the password.'};
   if(pw.length>128)return{ok:false,error:'Incorrect password.',left:0};
   const now=Date.now();if(rec.until>now)return{ok:false,locked:true,wait:Math.ceil((rec.until-now)/1000)};
   if(busy)return{ok:false,error:'Please wait…'};busy=true;let good=false;
@@ -324,17 +383,17 @@ const Auth=(()=>{
   timer=setInterval(()=>{if(!sess)return;if(Date.now()-last>IDLE){lock('idle');return}cbTick.slice().forEach(f=>{try{f()}catch(e){}})},1000);
   fire(true);return{ok:true}}
  async function changePassword(cur,nw){require_();
-  if(typeof nw!=='string'||nw.length<4)return{ok:false,error:'New password must be at least 4 characters.'};
+  if(typeof nw!=='string'||nw.length<8)return{ok:false,error:'New password must be at least 8 characters.'};
   if(nw.length>128)return{ok:false,error:'New password is too long (max 128).'};
   const r=await check(cur);if(!r.ok)return{ok:false,error:r.locked?'Too many attempts. Try again in '+r.wait+'s.':(r.error==='Incorrect password.'?'Current password is incorrect.':r.error)};
-  require_();const prev=rec,next=await make(nw,false);rec=next;
+  require_();const prev=rec,next=await make(nw);next.hint=prev.hint||'';if(prev.recovery)next.recovery=prev.recovery;rec=next;
   if(!persist()){rec=prev;return{ok:false,error:'Could not store the new password (browser storage blocked or full).'}}
   last=Date.now();return{ok:true}}
  ['pointerdown','keydown','touchstart','wheel','mousemove','scroll'].forEach(ev=>addEventListener(ev,touch,{passive:true,capture:true}));
  document.addEventListener('visibilitychange',()=>{if(sess&&Date.now()-last>IDLE)lock('idle')});
- addEventListener('storage',e=>{if(e.key===KEY||e.key===null){const s=stored();if(valid(s))rec=s;lock('changed')}}); // password changed/cleared in another tab
- return Object.freeze({IDLE_MS:IDLE,ready,isUnlocked:()=>sess&&Date.now()-last<=IDLE,require:require_,login,lock,logout:()=>lock('logout'),touch,changePassword,
-  isDefault:()=>!!(rec&&rec.def),remaining:()=>sess?Math.max(0,IDLE-(Date.now()-last)):0,
+ addEventListener('storage',e=>{if(e.key===KEY||e.key===null){const s=stored();rec=valid(s)?s:null;lock('changed')}}); // clearing storage also clears the in-memory credential in other open tabs
+ return Object.freeze({IDLE_MS:IDLE,ready,hasPassword:async()=>{await ready;return valid(rec)},getHint:()=>rec&&typeof rec.hint==='string'?rec.hint:'',isUnlocked:()=>sess&&Date.now()-last<=IDLE,require:require_,login,setupPassword,configureRecovery,resetWithRecovery,lock,logout:()=>lock('logout'),touch,changePassword,
+  remaining:()=>sess?Math.max(0,IDLE-(Date.now()-last)):0,
   lockoutLeft:()=>Math.max(0,Math.ceil(((rec&&rec.until)||0)/1000-Date.now()/1000)),
   onChange:f=>{cbChange.push(f)},onTick:f=>{cbTick.push(f)}})})();
 /* ---- Model: the ONLY code that can change gestures. Every mutator re-checks authorisation. ---- */
@@ -503,35 +562,61 @@ function stopSpeak(){if(hasTTS){speechSynthesis.cancel();$('spmsg').textContent=
 let lkResolve=null,lkOpts=null,lkKind='',lkBusy=false,lkTimer=null,lockWhy='',pendingName='';
 const lkIsOpen=()=>!$('lockOv').hidden;
 const fmt=ms=>{const s=Math.max(0,Math.ceil(ms/1000));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
-function paintAuth(){const u=Auth.isUnlocked(),c=$('authChip');c.textContent=u?'🔓 '+fmt(Auth.remaining()):'🔒 Locked';c.className=u?'alt':'ghost';
- c.title=u?'Training unlocked — click to lock now. Auto-locks after 5 minutes of inactivity.':'Training locked — click to unlock';
+function paintAuth(){const u=Auth.isUnlocked(),c=$('authChip');c.textContent=u?'🔓 '+fmt(Auth.remaining()):'🔒 Training';c.className=u?'alt':'ghost';
+ c.title=u?'Training unlocked — click to lock now. Auto-locks after 5 minutes of inactivity.':'Training access is protected; the rest of the app remains available.';
  $('navTrain').textContent=u?'Train Gestures':'Train Gestures 🔒';
  const t=$('authTimer');if(t)t.textContent=u?'Auto-locks after '+fmt(Auth.remaining())+' of inactivity':'';
- const w=$('defWarn');if(w)w.hidden=!Auth.isDefault()}
+}
 function lkError(t){const e=$('lkErr');e.textContent=t;e.classList.toggle('show',!!t)}
+function recoverError(t){const e=$('lkRecoverErr');e.textContent=t;e.classList.toggle('show',!!t)}
 function lkShake(){const c=$('lkCard');c.classList.remove('shake');void c.offsetWidth;c.classList.add('shake')}
 function lkCountdown(){clearInterval(lkTimer);const go=()=>{const w=Auth.lockoutLeft();
   if(w>0){lkError('⛔ Too many incorrect attempts. Try again in '+w+'s.');$('lkGo').disabled=true;$('lkPw').disabled=true}
   else{clearInterval(lkTimer);lkTimer=null;$('lkGo').disabled=false;$('lkPw').disabled=false;if($('lkErr').textContent.startsWith('⛔')){lkError('You can try again now.');$('lkPw').focus()}}};
  if(Auth.lockoutLeft()>0){go();lkTimer=setInterval(go,500)}}
-function askUnlock(o){return new Promise(res=>{if(lkResolve){const r=lkResolve;lkResolve=null;r(false)}
- lkResolve=res;lkOpts=o||{};lkKind=lkOpts.kind||'';$('lkT').textContent=lkOpts.title||'Administrator Password Required';$('lkSub').textContent=lkOpts.sub||'';
+let lkSetup=false,lkMode='login',recoveryCodeCurrent='';
+async function askUnlock(o){await Auth.ready;lkSetup=!(await Auth.hasPassword());lkMode='login';return new Promise(res=>{if(lkResolve){const r=lkResolve;lkResolve=null;r(false)}
+ lkResolve=res;lkOpts=o||{};lkKind=lkOpts.kind||'';
+ const title=lkSetup?'Create Training Password':(lkOpts.title||'Training Password Required');
+ $('lkT').textContent=lkSetup?'Set your training password':title;
+ $('lkSub').textContent=lkSetup?'Create a password of at least 8 characters. It will protect gesture training and editing on this browser.':(lkOpts.sub||'');
  const n=$('lkNote');n.hidden=!lkOpts.note;n.textContent=lkOpts.note||'';
+ $('lkPwLabel').textContent=lkSetup?'New training password':'Training password';
+ $('lkPw').placeholder=lkSetup?'Create a password':'Enter training password';
+ $('lkConfirmLabel').hidden=!lkSetup;$('lkConfirmWrap').hidden=!lkSetup;$('lkPwConfirm').value='';
+ $('lkHintLabel').hidden=!lkSetup;$('lkHintWrap').hidden=!lkSetup;$('lkHint').value='';
+ $('lkForm').hidden=false;$('lkRecoverPanel').hidden=true;$('lkForgot').hidden=lkSetup;
+ $('lkGo').textContent=lkSetup?'Create password':'🔓 Unlock';
  $('lkPw').value='';$('lkPw').type='password';$('lkEye').setAttribute('aria-pressed','false');lkError('');
+ $('lkRecoveryCode').value='';$('lkResetNew').value='';$('lkResetConfirm').value='';recoverError('');
  $('lockOv').hidden=false;document.body.style.overflow='hidden';$('lkGo').disabled=false;$('lkPw').disabled=false;
  document.querySelector('nav').inert=true;document.querySelector('main').inert=true;lkCountdown();setTimeout(()=>$('lkPw').focus(),60)})}
-function closeLk(ok){clearInterval(lkTimer);lkTimer=null;$('lockOv').hidden=true;document.body.style.overflow='';$('lkPw').value='';
+function closeLk(ok){clearInterval(lkTimer);lkTimer=null;$('lockOv').hidden=true;document.body.style.overflow='';$('lkPw').value='';$('lkPwConfirm').value='';
  document.querySelector('nav').inert=false;document.querySelector('main').inert=false;
- const r=lkResolve,o=lkOpts;lkResolve=null;lkOpts=null;lkKind='';if(r)r(ok);if(!ok&&o&&o.onCancel)o.onCancel()}
+ const r=lkResolve,o=lkOpts;lkResolve=null;lkOpts=null;lkKind='';lkSetup=false;if(r)r(ok);if(!ok&&o&&o.onCancel)o.onCancel()}
 $('lkForm').addEventListener('submit',async e=>{e.preventDefault();if(lkBusy)return;const pw=$('lkPw').value;if(!pw){lkError('Please enter the password.');lkShake();return}
- lkBusy=true;$('lkGo').disabled=true;$('lkGo').textContent='Checking…';let r;
- try{r=await Auth.login(pw)}catch(x){r={ok:false,error:'Could not verify the password.'}}
- lkBusy=false;$('lkGo').textContent='🔓 Unlock';$('lkGo').disabled=false;
- if(r.ok){closeLk(true);return}
- $('lkPw').value='';lkShake();
+ lkBusy=true;$('lkGo').disabled=true;$('lkGo').textContent=lkSetup?'Creating…':'Checking…';let r;
+ try{
+  if(lkSetup){const confirm=$('lkPwConfirm').value;if(pw!==confirm)r={ok:false,error:'The passwords do not match.'};else r=await Auth.setupPassword(pw,$('lkHint').value)}
+  else r=await Auth.login(pw);
+ }catch(x){r={ok:false,error:'Could not verify or save the password.'}}
+ lkBusy=false;$('lkGo').textContent=lkSetup?'Create password':'🔓 Unlock';$('lkGo').disabled=false;
+ if(r.ok){closeLk(true);if(r.recoveryCode)alert('IMPORTANT — SAVE YOUR PASSWORD RECOVERY CODE\n\n'+r.recoveryCode+'\n\nKeep it somewhere safe. It will not be shown again. If you reset your password later, a new recovery code will be generated.');return}
+ $('lkPw').value='';if(lkSetup)$('lkPwConfirm').value='';lkShake();
+ if(r.needsSetup){lkSetup=true;$('lkT').textContent='Set your training password';$('lkSub').textContent='Your saved password was cleared. Create a new password of at least 8 characters.';$('lkPwLabel').textContent='New training password';$('lkConfirmLabel').hidden=false;$('lkConfirmWrap').hidden=false;$('lkHintLabel').hidden=false;$('lkHintWrap').hidden=false;$('lkForgot').hidden=true;$('lkGo').textContent='Create password';}
  if(r.locked){lkCountdown()}
  else lkError('❌ '+(r.error==='Incorrect password.'?'Incorrect password. Training controls remain locked.'+(r.left?' '+r.left+' attempt'+(r.left===1?'':'s')+' left before a temporary lockout.':''):r.error||'Incorrect password.'));
  $('lkPw').focus()});
+$('lkForgot').addEventListener('click',()=>{if(lkBusy)return;lkMode='recover';$('lkForm').hidden=true;$('lkForgot').hidden=true;$('lkRecoverPanel').hidden=false;const hint=Auth.getHint();$('lkRecoverHint').textContent=hint?'Password hint: '+hint:'No password hint was saved for this password.';recoverError('');$('lkRecoveryCode').focus()});
+$('lkBack').addEventListener('click',()=>{lkMode='login';$('lkRecoverPanel').hidden=true;$('lkForm').hidden=false;$('lkForgot').hidden=false;recoverError('');$('lkPw').focus()});
+$('lkRecoverForm').addEventListener('submit',async e=>{e.preventDefault();if(lkBusy)return;const code=$('lkRecoveryCode').value,nw=$('lkResetNew').value,confirm=$('lkResetConfirm').value;
+ if(nw!==confirm){recoverError('The new passwords do not match.');return}
+ lkBusy=true;$('lkRecoverGo').disabled=true;$('lkRecoverGo').textContent='Resetting…';let r;
+ try{r=await Auth.resetWithRecovery(code,nw)}catch(x){r={ok:false,error:'Could not verify the recovery code or save the new password.'}}
+ lkBusy=false;$('lkRecoverGo').disabled=false;$('lkRecoverGo').textContent='Reset password';
+ if(r.ok){closeLk(true);alert('Your password has been reset.\n\nNEW RECOVERY CODE — SAVE IT NOW:\n\n'+r.recoveryCode+'\n\nYour old recovery code will no longer work.');return}
+ recoverError(r.error||'Password reset failed.');if(r.locked)recoverError('Too many incorrect recovery attempts. Try again in '+r.wait+' seconds.');
+ });
 $('lkNo').addEventListener('click',()=>{if(!lkBusy)closeLk(false)});
 $('lkEye').addEventListener('click',()=>{const p=$('lkPw'),show=p.type==='password';p.type=show?'text':'password';$('lkEye').setAttribute('aria-pressed',String(show));$('lkEye').setAttribute('aria-label',show?'Hide password':'Show password');p.focus()});
 $('lockOv').addEventListener('keydown',e=>{if(e.key==='Escape'&&!lkBusy){e.preventDefault();closeLk(false)}
@@ -539,10 +624,10 @@ $('lockOv').addEventListener('keydown',e=>{if(e.key==='Escape'&&!lkBusy){e.preve
   if(e.shiftKey&&i<=0){e.preventDefault();f[f.length-1].focus()}else if(!e.shiftKey&&i===f.length-1){e.preventDefault();f[0].focus()}}});
 const WHY={idle:'Locked automatically after 5 minutes of inactivity.',manual:'Training is locked.',logout:'You have been logged out.',changed:'The password was changed or cleared in another tab. Please sign in again.'};
 function openTrainLock(){const note=WHY[lockWhy]||'';lockWhy='';
- askUnlock({kind:'train',title:'Training Module Locked',sub:'Enter the administrator password to train gestures.',note,onCancel(){if(location.hash==='#train')location.hash=prevHash}}).then(ok=>{if(ok)route()})}
+ askUnlock({kind:'train',title:'Training Module Locked',sub:'Enter your training password to train gestures.',note,onCancel(){if(location.hash==='#train')location.hash=prevHash}}).then(ok=>{if(ok)route()})}
 function ensureUnlocked(what){if(Auth.isUnlocked()){Auth.touch();return Promise.resolve(true)}
- return askUnlock({kind:'action',title:'Administrator Password Required',sub:what+' requires the training password.'})}
-function chipClick(){if(Auth.isUnlocked())Auth.lock('manual');else askUnlock({kind:'action',title:'Administrator Login',sub:'Unlock to enable training and library editing.'})}
+ return askUnlock({kind:'action',title:'Training Password Required',sub:what+' requires the training password.'})}
+function chipClick(){if(Auth.isUnlocked())Auth.lock('manual');else askUnlock({kind:'action',title:'Training Access',sub:'Unlock to enable training and library editing.'})}
 function lockTraining(){Auth.lock('manual')}
 function logoutTraining(){location.hash='#home';Auth.logout()}
 function buildTrain(){const host=$('trainHost');if(!host.firstElementChild)host.appendChild($('trainTpl').content.cloneNode(true));$('trainLocked').hidden=true;renderSugg();
@@ -580,6 +665,11 @@ async function changePw(){const g=id=>$(id)?$(id).value:'',say=(t,e)=>{const m=$
  try{const r=await Auth.changePassword(g('pwCur'),n);
   if(r.ok){['pwCur','pwNew','pwNew2'].forEach(i=>{if($(i))$(i).value=''});say('Password changed. Use the new password next time.');paintAuth()}else say(r.error||'Could not change password.',1)}
  catch(e){if(!authDenied(e))throw e}}
+async function configureRecovery(){const g=id=>$(id)?$(id).value:'';const say=(t,e)=>{const m=$('pwMsg');if(m)m.innerHTML=`<div class="msg${e?' err':''}">${esc(t)}</div>`};
+ try{const r=await Auth.configureRecovery(g('pwHint'));if(!r.ok){say(r.error||'Could not configure recovery.',1);return}
+ recoveryCodeCurrent=r.recoveryCode;const m=$('recoveryMsg');m.hidden=false;m.textContent='Save this recovery code now. It will be shown only once: ';const code=document.createElement('code');code.textContent=r.recoveryCode;m.append(code);$('recoveryCopy').hidden=false;$('pwHint').value='';
+ }catch(e){if(!authDenied(e))throw e}}
+async function copyRecoveryCode(){if(!recoveryCodeCurrent)return;try{await navigator.clipboard.writeText(recoveryCodeCurrent);const m=$('pwMsg');if(m)m.innerHTML='<div class="msg">Recovery code copied. Save it somewhere safe.</div>'}catch(e){const m=$('pwMsg');if(m)m.innerHTML='<div class="msg err">Copy is unavailable. Select and copy the code shown above.</div>'}}
 // ---------- library (rename / delete are guarded the same way) ----------
 function renameGesture(n,nn){Auth.require();nn=String(nn||'').trim();if(!nn||nn===n)return{ok:false,error:'unchanged'};
  if(Object.keys(GEST).some(k=>k.toLowerCase()===nn.toLowerCase()))return{ok:false,error:'exists'};
